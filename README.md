@@ -21,17 +21,9 @@ Ensure your workspace directory looks like this:
 ```
 
 ### 3. Download Dependencies
-You **must** download the Flink Kafka Connector (v3.0.1 for Flink 1.18) and place it in the `jars/` folder before running.
+You **must** place the manually downloaded Flink Kafka Connector (`flink-sql-connector-kafka-3.1.0-1.18.jar`) in the `jars/` folder before running.
 
-**Linux/Mac:**
-```bash
-wget https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-kafka/3.0.1-1.18/flink-sql-connector-kafka-3.0.1-1.18.jar -P jars/
-```
-
-**Windows (PowerShell):**
-```powershell
-Invoke-WebRequest -Uri "https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-kafka/3.0.1-1.18/flink-sql-connector-kafka-3.0.1-1.18.jar" -OutFile "jars/flink-sql-connector-kafka-3.0.1-1.18.jar"
-```
+*Note: Since you have manually downloaded version 3.1.0, ensure it is present in `jars/`.*
 
 ### 4. Run the System
 Build the custom images and start the services:

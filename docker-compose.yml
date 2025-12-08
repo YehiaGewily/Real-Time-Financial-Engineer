@@ -85,5 +85,5 @@ services:
         sleep 10 &&
         ./bin/flink run \
           -py /opt/src/processor.py \
-          --jarfile /opt/flink/lib/usrlib/flink-sql-connector-kafka-3.0.1-1.18.jar
+          --jarfile /opt/flink/lib/usrlib/flink-sql-connector-kafka-3.1.0-1.18.jar
       "
