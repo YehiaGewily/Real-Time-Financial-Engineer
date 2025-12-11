@@ -26,7 +26,7 @@ def main():
         ) WITH (
             'connector' = 'kafka',
             'topic' = 'crypto-prices',
-            'properties.bootstrap.servers' = 'kafka:9092',
+            'properties.bootstrap.servers' = 'kafka:29092',
             'properties.group.id' = 'flink-processor',
             'scan.startup.mode' = 'latest-offset',
             'format' = 'json'
@@ -65,23 +65,38 @@ def main():
     t_env.create_temporary_view("binance_window", binance_view)
 
     # 5. Join and Filter
-    result_table = t_env.sql_query(f"""
+    # 6. Create Sink Table (Kafka)
+    t_env.execute_sql("""
+        CREATE TABLE alerts_sink (
+            symbol STRING,
+            coinbase_price DOUBLE,
+            binance_price DOUBLE,
+            spread_diff DOUBLE,
+            ts TIMESTAMP(3)
+        ) WITH (
+            'connector' = 'kafka',
+            'topic' = 'arbitrage-alerts',
+            'properties.bootstrap.servers' = 'kafka:29092',
+            'format' = 'json'
+        )
+    """)
+
+    # 7. Execute (Insert into Sink)
+    print("Submitting Job to Kafka Sink...")
+    
+    # We select 'BTC' as symbol since our source data implies it, and map window_end to ts
+    t_env.execute_sql(f"""
+        INSERT INTO alerts_sink
         SELECT 
-            c.window_start,
-            c.window_end,
+            'BTC',
             c.cb_price,
             b.bn_price,
-            ABS(c.cb_price - b.bn_price) as spread_diff,
-            CASE WHEN ABS(c.cb_price - b.bn_price) > {threshold} THEN 'ARBITRAGE_DETECTED' ELSE 'NORMAL' END as status
+            ABS(c.cb_price - b.bn_price),
+            c.window_end
         FROM coinbase_window c
         JOIN binance_window b ON c.window_start = b.window_start
         WHERE ABS(c.cb_price - b.bn_price) > {threshold}
-    """)
-
-    # 6. Execute and Print
-    # in a real app, this might go to a 'alerts' Kafka topic or DB
-    print("Submitting Job...")
-    result_table.execute().print()
+    """).wait()
 
 if __name__ == '__main__':
     main()

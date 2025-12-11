@@ -6,7 +6,7 @@ from kafka import KafkaProducer
 from kafka.errors import KafkaError
 
 # Configuration
-KAFKA_BROKER = 'kafka:9092'
+KAFKA_BROKER = 'kafka:29092'
 KAFKA_TOPIC = 'crypto-prices'
 COINBASE_WS_URL = 'wss://ws-feed.exchange.coinbase.com'
 BINANCE_WS_URL = 'wss://stream.binance.com:9443/ws/btcusdt@trade'
@@ -38,7 +38,7 @@ def normalize_and_send(symbol, price, source):
             "symbol": symbol,
             "price": float(price),
             "source": source,
-            "timestamp": int(time.time() * 1000)
+            "ts": int(time.time() * 1000)
         }
         producer.send(KAFKA_TOPIC, value=payload)
         # print(f"Sent: {payload}") # Debug logging

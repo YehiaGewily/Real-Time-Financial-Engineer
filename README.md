@@ -14,16 +14,16 @@ Ensure your workspace directory looks like this:
 ├── docker-compose.yml
 ├── Dockerfile
 ├── jars/
-│   └── flink-sql-connector-kafka-3.0.0-1.18.jar  <-- You need to download this
+│   └── flink-sql-connector-kafka-3.0.1-1.18.jar  <-- You need to download this
 └── src/
     ├── producer.py
     └── processor.py
 ```
 
 ### 3. Download Dependencies
-You **must** place the manually downloaded Flink Kafka Connector (`flink-sql-connector-kafka-3.1.0-1.18.jar`) in the `jars/` folder before running.
+You **must** place the manually downloaded Flink Kafka Connector (`flink-sql-connector-kafka-3.0.1-1.18.jar`) in the `jars/` folder before running.
 
-*Note: Since you have manually downloaded version 3.1.0, ensure it is present in `jars/`.*
+*Note: Since you have manually downloaded version 3.0.1, ensure it is present in `jars/`.*
 
 ### 4. Run the System
 Build the custom images and start the services:

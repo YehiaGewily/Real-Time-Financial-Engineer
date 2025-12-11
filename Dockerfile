@@ -8,7 +8,7 @@ RUN apt-get update -y && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Producer dependencies
-RUN pip3 install kafka-python websocket-client
+RUN pip3 install kafka-python websocket-client streamlit pandas requests
 
 # Install PyFlink (Optional but good for local dev/submitter if not using the bundled one)
 # Note: The provided Flink image has PyFlink libs in /opt/flink/opt/python usually, 
