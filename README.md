@@ -1,11 +1,43 @@
-# Real-Time Crypto Arbitrage Detector
+# ⚡ Real-Time Crypto Arbitrage Detector
 
-A real-time data engineering project detecting Bitcoin price discrepancies between Coinbase and Binance using Apache Flink and Kafka.
+![Python](https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge&logo=python) ![Apache Flink](https://img.shields.io/badge/Apache%20Flink-1.18-eb6c2d?style=for-the-badge&logo=apacheflink) ![Kafka](https://img.shields.io/badge/Kafka-3.x-black?style=for-the-badge&logo=apachekafka) ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ed?style=for-the-badge&logo=docker) ![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B?style=for-the-badge&logo=streamlit)
 
-## Quick Start
+A robust, real-time data engineering pipeline that detects Bitcoin (BTC) price discrepancies between **Coinbase** and **Binance** using Apache Flink and Kafka. The system processes market data in real-time, identifies arbitrage opportunities, and alerts users via Discord and a live Streamlit dashboard.
+
+---
+
+## 🏗️ Architecture
+
+The pipeline consists of four main microservices orchestrated via Docker Compose:
+
+1.  **Consumer/Producer (`src/producer.py`)**:
+    *   Connects to **Coinbase** and **Binance** WebSockets.
+    *   Normalizes real-time trade data.
+    *   Publishes to Kafka topic `crypto-prices`.
+
+2.  **Stream Processor (`src/processor.py`)**:
+    *   **Apache Flink** (PyFlink) job.
+    *   Consumes from `crypto-prices`.
+    *   Applies **Tumbling Windows** (10 seconds) to aggregate prices.
+    *   Joins streams from both exchanges.
+    *   Detects spreads > $50.
+    *   Sinks alerts to Kafka topic `arbitrage-alerts`.
+
+3.  **Alerter Service (`src/alerter.py`)**:
+    *   Consumes from `arbitrage-alerts`.
+    *   Sends real-time notifications to a **Discord Webhook**.
+
+4.  **Dashboard (`src/dashboard.py`)**:
+    *   **Streamlit** application.
+    *   Consumes `arbitrage-alerts` to visualize price spreads and alert history in real-time.
+
+---
+
+## 🚀 Quick Start
 
 ### 1. Prerequisites
-- Docker & Docker Compose installed.
+*   **Docker** & **Docker Compose** installed.
+*   **Git** installed.
 
 ### 2. Setup Project Structure
 Ensure your workspace directory looks like this:
@@ -14,41 +46,74 @@ Ensure your workspace directory looks like this:
 ├── docker-compose.yml
 ├── Dockerfile
 ├── jars/
-│   └── flink-sql-connector-kafka-3.0.1-1.18.jar  <-- You need to download this
+│   └── flink-sql-connector-kafka-3.0.1-1.18.jar  <-- Download manually if missing
 └── src/
     ├── producer.py
-    └── processor.py
+    ├── processor.py
+    ├── alerter.py
+    └── dashboard.py
 ```
+> **Note**: The `flink-sql-connector-kafka` JAR is required for Flink to talk to Kafka.
 
-### 3. Download Dependencies
-You **must** place the manually downloaded Flink Kafka Connector (`flink-sql-connector-kafka-3.0.1-1.18.jar`) in the `jars/` folder before running.
-
-*Note: Since you have manually downloaded version 3.0.1, ensure it is present in `jars/`.*
-
-### 4. Run the System
+### 3. Run the System
 Build the custom images and start the services:
 
 ```bash
 docker-compose up --build -d
 ```
 
-### 5. Verify Output
-Data flows as follows: `WebSockets -> producer -> Kafka -> Flink (processor) -> TaskManager Stdout`.
+### 4. Verify Output
 
-To view the arbitrage alerts (or "NORMAL" status), you need to view the logs of the Flink TaskManager container.
+#### 📊 Dashboard
+Access the real-time dashboard at:
+👉 **[http://localhost:8501](http://localhost:8501)**
 
+#### 💬 Discord Alerts
+If the spread exceeds the threshold (or in Demo Mode), alerts will be sent to the configured Discord Webhook.
+
+#### 📝 Flink Logs
+To view the underlying processing logs:
 ```bash
-# View logs and follow (-f)
 docker logs -f taskmanager
 ```
 
-*Note: It may take 30-60 seconds for the containers to fully initialize and the first 10-second window to close.*
+---
 
-### 6. Control Parameters
-- **DEMO_MODE**: To force alerts (by lowering the threshold to $0.1), edit `docker-compose.yml`:
-  ```yaml
-  job-submitter:
-    # ...
-    environment:
-      DEMO_MODE: "TRUE"
-  ```
+## ⚙️ Configuration & Demo Mode
+
+### Demo Mode
+To force alerts for testing (even if there is no profitable spread), you can enable **DEMO_MODE**. This effectively lowers the detection threshold to **$0.1**.
+
+1.  Open `docker-compose.yml`.
+2.  Find the `job-submitter` service.
+3.  Set `DEMO_MODE=TRUE`:
+    ```yaml
+    job-submitter:
+      environment:
+        - DEMO_MODE=TRUE
+    ```
+4.  Restart the services: `docker-compose up -d`
+
+---
+
+## 📂 Project Structure
+
+| File/Folder | Description |
+| :--- | :--- |
+| `src/producer.py` | Python script to fetch WS data and push to Kafka. |
+| `src/processor.py` | PyFlink SQL job for windowing and arbitrage logic. |
+| `src/alerter.py` | Service to push alerts to Discord. |
+| `src/dashboard.py` | Streamlit web app for visualization. |
+| `docker-compose.yml` | Orchestrates Zookeeper, Kafka, JobManager, TaskManager, and App services. |
+| `Dockerfile` | Custom image definition for Python dependencies. |
+
+---
+
+## 🛠️ Troubleshooting
+
+*   **"Leader Not Available" in Kafka Logs**:
+    *   This is common during startup. The services are designed to retry and should recover automatically after 30-60 seconds.
+*   **Dashboard shows "Waiting for Kafka"**:
+    *   Ensure the Kafka container is healthy (`docker ps`).
+*   **No Alerts**:
+    *   Real arbitrage is rare! Enable **DEMO_MODE** to verify the pipeline is working.
