@@ -41,6 +41,8 @@ graph LR
 Real-Time Alerts Real-time visualization of price spreads Instant notifications sent to Discord
 ![alt text](image.png)
 ![alt text](image-1.png)
+Discord Alert
+![alt text](image-2.png)
 ##  Quick Start
 
 ### 1. Prerequisites
